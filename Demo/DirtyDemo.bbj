@@ -13,8 +13,10 @@ wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
 wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
 
 nav! = new NavigatorComponent(wnd!,99,0,0,900,20)
+
 bgrid! = new BusinessGrid(wnd!,100,0,20,900,280)
 bgrid!.getGrid().getOptions().setMultipleSelection(1)
+
 tstcomp! = new TestComponent(wnd!,101,0,301,450,300)
 
 edittb! = new EditToolbarComponent(wnd!,103,451,301,450,30)
