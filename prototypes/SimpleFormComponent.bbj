@@ -1,0 +1,137 @@
+use ::BusinessUIComponents/AbstractBCBoundWidget.bbj::AbstractBCBoundWidget
+use ::BBjGridExWidget/BBjGridExWidget.bbj::BBjGridExWidget
+use com.basiscomponents.bc.BCBound
+use com.basiscomponents.bc.BCBinder
+
+use com.basiscomponents.db.ResultSet
+use com.basiscomponents.db.DataRow
+
+rem /**
+rem  * A sample BBj Widget Implementation
+rem  */
+class public SimpleFormComponent extends AbstractBCBoundWidget
+
+    field private BBjWindow cw!
+    field private BBjVector fieldlist!
+
+    rem --------------------- constructors -------------------------------------
+    
+    rem /**
+    rem  * disabled default constructor
+    rem  */
+    method private SimpleFormComponent()
+    methodend
+
+    rem /**
+    rem  * The constructor that creates the widget on wnd!
+    rem * @param BBjWindow wnd!: parent window
+    rem * @param BBjInt id: the control ID
+    rem * @param BBjInt x: x-location
+    rem * @param BBjInt y: y-location
+    rem * @param BBjInt w: width
+    rem * @param BBjInt h: height
+    rem */
+    method public SimpleFormComponent(BBjWindow wnd!, BBjInt id!, BBjInt x!, BBjInt y!, BBjInt w!, BBjInt h!)
+        #super!.create(wnd!,id!,x!,y!,w!,h!)
+    methodend
+    
+
+    method public void setForm(BBjString res_name$, BBjNumber id)
+        res = BBjAPI().getSysGui().resOpen(res_name$)
+        #cw! = #getCanvas().createChildWindow(res, id, 100, 0, 0)
+        
+    methodend
+
+    rem ---------------------- methods from BBjWidget -------------------------------- 
+
+    rem /**
+    rem  * @Override
+    rem  * This method is called whenever the widget needs to be rendered
+    rem  * @param Boolean f_init!: if TRUE the control is rendered for the first time so this method has to perform initial rendering
+    rem  */
+    method public void redraw(Boolean f_init!)
+        if (f_init!) then
+        FI
+        if (#cw! <> null()) then 
+            #cw!.setSize(#getWidth(),#getHeight())
+        fi
+    methodend
+
+    method private void clearForm()
+        if (#fieldlist! = null()) then #buildFieldList()
+        
+        it! = #fieldlist!.iterator()
+        while it!.hasNext()
+            n$=it!.next()
+            #cw!.getControl(n$).setText("")
+        wend
+        #cw!.setEnabled(0)
+    methodend
+
+    method private void updateScreen()
+        if (#cw!= null()) then methodret
+        
+        if (#fieldlist! = null()) then #buildFieldList()
+        
+        sel! = #getBinder().getSelection()
+        
+        if (sel!.size() <> 1) then
+            #clearForm()
+            methodret
+        fi
+        rs! = #getBinder().getRS()
+        rowkey$ = sel!.get(0)
+        rec! = rs!.get(rowkey$)
+        it! = #fieldlist!.iterator()
+        while it!.hasNext()
+            n$=it!.next()
+            #cw!.getControl(n$).setText(rec!.getFieldAsString(n$))
+        wend
+        #cw!.setEnabled(1)
+    methodend
+    
+    method public void onSetData()
+        #updateScreen()
+    methodend
+
+    method public void onSetSelection()
+        #updateScreen()
+    methodend
+
+    method private void buildFieldList()
+        l! = #getBinder().getAttributesRecord().getFieldNames()
+        
+        formfields! = #cw!.getAllControls()
+        fieldlist! = new BBjVector()
+        
+        it! = formfields!.iterator()
+        
+        while it!.hasNext()
+            c! = it!.next() 
+            n$=c!.getName()
+            if l!.contains(n$) then
+                fieldlist!.addItem(n$)
+                
+                #registerCallbacks(c!)
+                
+            fi
+        wend
+        
+        #fieldlist! = CAST(BBjVector,fieldlist!)
+    methodend
+    
+    method private void registerCallbacks(BBjControl c!)
+        c!.setCallback(BBjAPI.ON_GAINED_FOCUS,#this!,"onControlGainedFocus") 
+    methodend
+    
+    method public void setBinder(BCBinder binder!)
+        #super!.setBinder(binder!)
+    methodend
+    
+    method public void onControlGainedFocus(BBjGainedFocusEvent ev!)
+    
+        #getBinder().sendSignal(BCBinder.SIGNAL_DIRTY)
+    
+    methodend
+
+classend

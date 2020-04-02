@@ -1,0 +1,112 @@
+use ::BusinessUIComponents/AbstractBCBoundWidget.bbj::AbstractBCBoundWidget
+use ::BBjGridExWidget/BBjGridExWidget.bbj::BBjGridExWidget
+use com.basiscomponents.bc.BCBound
+use com.basiscomponents.bc.BCBinder
+
+use com.basiscomponents.db.ResultSet
+use com.basiscomponents.db.DataRow
+
+rem /**
+rem  * A sample BBj Widget Implementation
+rem  */
+class public EditToolbarComponent extends AbstractBCBoundWidget
+
+    field private BBjToolButton btn_new!
+    field private BBjToolButton btn_save!
+    field private BBjToolButton btn_delete!
+    
+    field private Boolean dirty! = BBjAPI.FALSE
+        
+    rem --------------------- constructors -------------------------------------
+    
+    rem /**
+    rem  * disabled default constructor
+    rem  */
+    method private EditToolbarComponent()
+    methodend
+
+    rem /**
+    rem  * The constructor that creates the widget on wnd!
+    rem * @param BBjWindow wnd!: parent window
+    rem * @param BBjInt id: the control ID
+    rem * @param BBjInt x: x-location
+    rem * @param BBjInt y: y-location
+    rem * @param BBjInt w: width
+    rem * @param BBjInt h: height
+    rem */
+    method public EditToolbarComponent(BBjWindow wnd!, BBjInt id!, BBjInt x!, BBjInt y!, BBjInt w!, BBjInt h!)
+        #super!.create(wnd!,id!,x!,y!,w!,h!)
+    methodend
+    
+
+    rem ---------------------- methods from BBjWidget -------------------------------- 
+
+    rem /**
+    rem  * @Override
+    rem  * This method is called whenever the widget needs to be rendered
+    rem  * @param Boolean f_init!: if TRUE the control is rendered for the first time so this method has to perform initial rendering
+    rem  */
+    method public void redraw(Boolean f_init!)
+        if (f_init!) then
+            #btn_new! = #getCanvas().addToolButton(100,0,0,25,25,"NEW")
+            #btn_new!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onBtnNew")
+            
+            #btn_save! = #getCanvas().addToolButton(101,25,0,25,25,"SAVE")
+            #btn_save!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onBtnSave")
+            
+            #btn_delete! = #getCanvas().addToolButton(102,50,0,25,25,"DELETE")
+            #btn_delete!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onBtnDelete")
+            
+            #enableControls()
+        FI
+        
+    methodend
+
+
+    method private void enableControls()
+        if #getBinder() <> null() then
+            #btn_new!.setEnabled(#dirty! = BBjAPI.FALSE)
+            #btn_save!.setEnabled(#dirty!)
+            #btn_delete!.setEnabled(#getBinder().getSelection().size()>0)
+        fi
+    methodend
+    
+    method public void onBtnNew( BBjToolButtonPushEvent ev! )
+        #getBinder().sendSignal(BCBinder.SIGNAL_NEW)
+    methodend
+
+    method public void onBtnSave( BBjToolButtonPushEvent ev! )
+        #getBinder().sendSignal(BCBinder.SIGNAL_SAVE)
+        #dirty! = BBjAPI.FALSE
+        #enableControls()
+    methodend
+    
+    method public void onBtnDelete( BBjToolButtonPushEvent ev! )
+        #getBinder().sendSignal(BCBinder.SIGNAL_DELETE)
+    methodend
+    
+    method public void onSignal(int signal!, Object payload!)
+        if signal! = BCBinder.SIGNAL_DIRTY then
+            #dirty! = BBjAPI.TRUE
+        fi
+        #enableControls()
+    methodend
+    
+    method public void onSetSelection()
+        #enableControls()
+    methodend
+
+    method public void onSetData()
+        #enableControls()
+    methodend
+    
+    method public Boolean canSetSelection()
+        if #dirty! then
+            a=msgbox("unsaved data!")
+            methodret BBjAPI.FALSE
+        fi
+        methodret BBjAPI.TRUE
+    methodend
+    
+
+classend
